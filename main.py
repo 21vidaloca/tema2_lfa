@@ -249,6 +249,7 @@ def transformare_nfa(nfa):
             # print(dict[x])
             lg = len(dict[x])
             i = 0
+            
             while i < lg:
                 # avem tuplul dict[x][i]
                 # print(i,len(dict[x]))

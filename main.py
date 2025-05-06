@@ -282,7 +282,7 @@ def transformare_nfa(nfa):
     return nfa_final
 
 
-def verificare_nfa(sir, nfa, nod, ind):
+def verificare_dfa(sir, nfa, nod, ind):
     global ok
     if nod in nfa[2]:
         for k in nfa[2][nod]:
@@ -298,20 +298,119 @@ def verificare_nfa(sir, nfa, nod, ind):
                     ind = ind + 1
                     # print(k[0],k[1],ok)
                     # print("intru",ind)
-                    verificare_nfa(sir, nfa, k[0], ind)
+                    verificare_dfa(sir, nfa, k[0], ind)
                     # print(k,ok)
                     # print("ies",ind)
                     ind = ind - 1
 
 
 def transformare_nfa_dfa(nfa):
-    dfa_final = nfa
+    # dfa_final = nfa
+    alfabet = []
+    dict_nfa = nfa[2]
+
+    # aici gasim alfabetul
+    for x in dict_nfa:
+        for h in dict_nfa[x]:
+            if h[1] not in alfabet:
+                alfabet.append(h[1])
+        # print(x)
+
+    stare_initiala = nfa[0]
+    stari_finale = nfa[1]
+
+    # print(alfabet)
+    c = -1
+    # noul q0 va corespunde starii initiale
+
+    stari = []
+    stari_transformate = []
+
+    transf = "q" + stare_initiala[1:] + "."
+
+    sinit = transf
+    sfin = []
+    dict = {}
+    stari.append(stare_initiala)
+    stari_transformate.append(transf)
+    # hash={}
+    lista_asteptare = [[stare_initiala]]
+    # print(lista_asteptare)
+
+    while lista_asteptare:
+
+        stari_curente = lista_asteptare[0]
+        lista_asteptare.pop(0)
+        transf = "q"
+        for x in stari_curente:
+            transf = transf + x[1:] + "."
+        # print(transf)
+
+        if transf not in dict:
+            dict[transf] = []
+        for litera in alfabet:
+            # gasim starile corespunzatoare din nfa
+            stare_adaugare = []
+            # print(stari_curente)
+            for stare in stari_curente:
+                # ne uitam in dict_nfa[stare_curenta]
+                if stare in dict_nfa:
+                    for x in dict_nfa[stare]:
+                        if x[1] == litera:
+                            if x[0] not in stare_adaugare:
+                                stare_adaugare.append(x[0])
+                            # print(x, litera)
+            # print(stare_adaugare)
+            # am gasit nodurile in care mergem
+            # le punem pe lista de asteptare doar daca
+            # nu au fost procesate inainte
+
+            transf1 = "q"
+            for x in stare_adaugare:
+                transf1 = transf1 + x[1:] + "."
+            # print(transf1)
+            if stare_adaugare not in stari and stare_adaugare != []:
+                lista_asteptare.append(stare_adaugare)
+                stari.append(stare_adaugare)
+                stari_transformate.append(transf1)
+            if(stare_adaugare!=[]):
+                # creeam muchii noi in dfa
+                dict[transf].append((transf1, litera))
+
+                for x in stari_finale:
+                    if x in stare_adaugare:
+                        sfin.append(transf1)
+                        break
+
+    # gataaaaaa avem tranzitiile
+    # aici actualizam starile dfa ului cu nume bune
+    c = -1
+    hash = {}
+    for x in stari_transformate:
+        c += 1
+        curent = "q" + str(c)
+        hash[x] = curent
+    
+    sinit=hash[sinit]
+    for indice in range(0,len(sfin)):
+        sfin[indice]=hash[sfin[indice]]
+    dnou={}
+    # print("afisam dfa ul")
+    # print(dict)
+    # print("finish")
+    for x in dict:
+        dnou[hash[x]]=[]
+        for i in range(0,len(dict[x])):
+            dnou[hash[x]].append((hash[dict[x][i][0]],dict[x][i][1]))
+
+    
+    dfa_final = (sinit, sfin, dnou)
     return dfa_final
 
-
+# format digraph  graphviz
 intrare = parsare()
 suma = 0
-for indice in range(0, 20):
+for indice in range(0,20):
     regex_intrare = intrare[indice]["regex"]
     regex_nou = transformare_postfix(regex_intrare)
     print(regex_intrare + "     " + regex_nou)
@@ -330,14 +429,14 @@ for indice in range(0, 20):
 
     # aici verificam sirurile
     teste = intrare[indice]["test_strings"]
-    for ceva in range(0, 1):  # len(teste)):
+    for ceva in range(0, len(teste)):  # len(teste)):
 
         ind = 0
         ok = 0
         sir_primit = intrare[indice]["test_strings"][ceva]["input"]
         # print(sir_primit, indice + 1)
-        stare_init = nfa[0]
-        verificare_nfa(sir_primit, nfa, stare_init, 0)
+        stare_init = dfa[0]
+        verificare_dfa(sir_primit, dfa, stare_init, 0)
         ans = ""
         exp = intrare[indice]["test_strings"][ceva]["expected"]
         if sir_primit == "":
